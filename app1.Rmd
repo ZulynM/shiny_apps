@@ -1,0 +1,93 @@
+---
+title: "Practica programada 1"
+author: "Zulyn Méndez Ovares"
+date: "2023-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+library(shinydashboard)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(readxl)
+```
+
+```{r}
+datos <- read.csv("C:/Users/cetav/Documents/Rstudio/datos/datos_empleo_genero.csv")
+```
+
+```{r}
+
+ui <- fluidPage(
+  titlePanel("Visualización de Datos de Empleo y Género en Latinoamérica y el Caribe"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("pais", "Seleccione un país/región:",
+                  choices = unique(datos$pais_region)),
+      sliderInput("anio", "Seleccione un año:",
+                  min = min(datos$anyo), max = max(datos$anyo), value = max(datos$anyo)),
+      actionButton("actualizar", "Actualizar Gráficos")
+    ),
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Gráfico de Empleo", plotOutput("grafico_empleo")),
+        tabPanel("Gráfico de Desempleo", plotOutput("grafico_desempleo")),
+        tabPanel("Gráfico de Trabajo Doméstico", plotOutput("grafico_trabajo_domestico")),
+        tabPanel("Tabla de Datos", tableOutput("tabla_datos"))
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  datos_filtrados <- reactive({
+    datos %>%
+      filter(pais_region == input$pais, anyo == input$anio)
+  })
+  
+  output$grafico_empleo <- renderPlot({
+    datos_filtrados() %>%
+      ggplot(aes(x = anyo, y = empleadoras_mujeres, color = "Mujeres Empleadoras")) +
+      geom_line() +
+      geom_line(aes(y = empleadores_hombres, color = "Hombres Empleadores")) +
+      labs(title = "Empleo por Género",
+           x = "Año",
+           y = "Porcentaje de Empleo") +
+      scale_color_manual(values = c("Mujeres Empleadoras" = "blue", "Hombres Empleadores" = "red"))
+  })
+  
+  output$grafico_desempleo <- renderPlot({
+    datos_filtrados() %>%
+      ggplot(aes(x = anyo, y = desempleo_mujeres, color = "Mujeres Desempleadas")) +
+      geom_line() +
+      geom_line(aes(y = desempleo_hombres, color = "Hombres Desempleados")) +
+      labs(title = "Desempleo por Género",
+           x = "Año",
+           y = "Porcentaje de Desempleo") +
+      scale_color_manual(values = c("Mujeres Desempleadas" = "blue", "Hombres Desempleados" = "red"))
+  })
+  
+  output$grafico_trabajo_domestico <- renderPlot({
+    datos_filtrados() %>%
+      ggplot(aes(x = anyo, y = trabajo_domestico_no_remunerado_mujeres, color = "Mujeres")) +
+      geom_line() +
+      geom_line(aes(y = trabajo_domestico_no_remunerado_hombres, color = "Hombres")) +
+      labs(title = "Trabajo Doméstico No Remunerado por Género",
+           x = "Año",
+           y = "Porcentaje de Tiempo") +
+      scale_color_manual(values = c("Mujeres" = "blue", "Hombres" = "red"))
+  })
+  
+  output$tabla_datos <- renderTable({
+    datos_filtrados() %>%
+      select(pais_region, anyo, empleadoras_mujeres, empleadores_hombres, desempleo_mujeres, desempleo_hombres, trabajo_domestico_no_remunerado_mujeres, trabajo_domestico_no_remunerado_hombres)
+  })
+}
+
+```
+
