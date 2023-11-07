@@ -88,6 +88,7 @@ server <- function(input, output) {
       select(pais_region, anyo, empleadoras_mujeres, empleadores_hombres, desempleo_mujeres, desempleo_hombres, trabajo_domestico_no_remunerado_mujeres, trabajo_domestico_no_remunerado_hombres)
   })
 }
+shinyApp(ui = ui, server = server)
 
 ```
 
